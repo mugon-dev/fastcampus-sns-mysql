@@ -1,4 +1,4 @@
-package com.example.fastcampusmysql.controller;
+package com.example.fastcampusmysql.application.controller;
 
 import java.util.List;
 

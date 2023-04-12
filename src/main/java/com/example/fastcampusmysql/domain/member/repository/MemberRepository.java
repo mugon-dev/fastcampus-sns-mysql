@@ -44,6 +44,16 @@ public class MemberRepository {
 		return Optional.ofNullable(nullableMember);
 	}
 
+	public List<Member> findAllByIdIn(List<Long> ids) {
+		// 빈 값처리를 안해주면 sql 문법 오류 발생
+		if (ids.isEmpty()) {
+			return List.of();
+		}
+		var sql = String.format("SELECT * FROM %s WHERE id in (:ids)", TABLE);
+		var params = new MapSqlParameterSource().addValue("ids", ids);
+		return parameterJdbcTemplate.query(sql, params, ROW_MAPPER);
+	}
+
 	public Member save(Member member) {
 		/*
 		member id를 보고 갱신 또는 삽입을 결정
