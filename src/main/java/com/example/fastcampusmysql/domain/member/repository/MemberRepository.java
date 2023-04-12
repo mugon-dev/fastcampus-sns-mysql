@@ -1,9 +1,12 @@
 package com.example.fastcampusmysql.domain.member.repository;
 
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -20,27 +23,25 @@ import lombok.RequiredArgsConstructor;
 @Repository
 public class MemberRepository {
 
-	private static final String TABLE = "MEMBER";
+	private static final String TABLE = "Member";
+	private static final RowMapper<Member> ROW_MAPPER = (ResultSet resultSet, int rowNum) -> Member.builder()
+		.id(resultSet.getLong("id"))
+		.nickname(resultSet.getString("nickname"))
+		.email(resultSet.getString("email"))
+		.birthday(resultSet.getObject("birthday", LocalDate.class))
+		.createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
+		.build();
 	final private NamedParameterJdbcTemplate parameterJdbcTemplate;
 
 	public Optional<Member> findById(Long id) {
-		/*
-			select *
-			from Member
-			where id = :id
-		 */
-		var sql = String.format("SELECT * FROM %S WHERE id = :id", TABLE);
-		var param = new MapSqlParameterSource().addValue("id", id);
-		RowMapper<Member> rowMapper = (resultSet, rowNum) ->
-			Member.builder()
-				.id(resultSet.getLong("id"))
-				.email(resultSet.getString("email"))
-				.nickname(resultSet.getString("nickname"))
-				.birthday(resultSet.getObject("birthday", LocalDate.class))
-				.createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
-				.build();
-		var member = parameterJdbcTemplate.queryForObject(sql, param, rowMapper);
-		return Optional.ofNullable(member);
+		var sql = String.format("SELECT * FROM %s WHERE id = :id ", TABLE);
+		var params = new MapSqlParameterSource()
+			.addValue("id", id);
+		List<Member> members = parameterJdbcTemplate.query(sql, params, ROW_MAPPER);
+
+		// jdbcTemplate.query의 결과 사이즈가 0이면 null, 2 이상이면 예외
+		Member nullableMember = DataAccessUtils.singleResult(members);
+		return Optional.ofNullable(nullableMember);
 	}
 
 	public Member save(Member member) {
@@ -56,7 +57,7 @@ public class MemberRepository {
 
 	private Member insert(Member member) {
 		SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(parameterJdbcTemplate.getJdbcTemplate()).withTableName(
-			"Member").usingGeneratedKeyColumns("id");
+			TABLE).usingGeneratedKeyColumns("id");
 		SqlParameterSource params = new BeanPropertySqlParameterSource(member);
 		var id = simpleJdbcInsert.executeAndReturnKey(params).longValue();
 		return Member.builder()
@@ -70,6 +71,10 @@ public class MemberRepository {
 	}
 
 	private Member update(Member member) {
+		var sql = String.format(
+			"UPDATE %s set email = :email, nickname = :nickname, birthday = :birthday WHERE id = :id", TABLE);
+		SqlParameterSource params = new BeanPropertySqlParameterSource(member);
+		parameterJdbcTemplate.update(sql, params);
 		return member;
 	}
 
