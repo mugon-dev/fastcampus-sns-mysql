@@ -16,7 +16,7 @@ public class Member {
 	final private String email;
 	final private LocalDate birthday;
 	final private LocalDateTime createdAt;
-	private final String nickname;
+	private String nickname;
 
 	@Builder
 	public Member(Long id, String nickname, String email, LocalDate birthday, LocalDateTime createdAt) {
@@ -30,7 +30,13 @@ public class Member {
 		this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
 	}
 
-	void validateNickname(String nickname) {
+	public void changeNickname(String other) {
+		Objects.requireNonNull(other);
+		validateNickname(other);
+		this.nickname = other;
+	}
+
+	private void validateNickname(String nickname) {
 		Assert.isTrue(nickname.length() <= NAME_MAX_LENGTH, "최대 길이를 초과했습니다.");
 	}
 }
