@@ -20,6 +20,10 @@ import lombok.RequiredArgsConstructor;
 public class PostReadService {
 	final private PostRepository postRepository;
 
+	private static long getNextKey(List<Post> posts) {
+		return posts.stream().mapToLong(Post::getId).min().orElse(CursorRequest.NONE_KEY);
+	}
+
 	/**
 	 * select *
 	 * from Post
@@ -38,7 +42,13 @@ public class PostReadService {
 
 	public PageCursor<Post> getPosts(Long memberId, CursorRequest cursorRequest) {
 		var posts = findAllBy(memberId, cursorRequest);
-		var nextKey = posts.stream().mapToLong(Post::getId).min().orElse(CursorRequest.NONE_KEY);
+		var nextKey = getNextKey(posts);
+		return new PageCursor<>(cursorRequest.next(nextKey), posts);
+	}
+
+	public PageCursor<Post> getPosts(List<Long> memberIds, CursorRequest cursorRequest) {
+		var posts = findAllBy(memberIds, cursorRequest);
+		var nextKey = getNextKey(posts);
 		return new PageCursor<>(cursorRequest.next(nextKey), posts);
 	}
 
@@ -48,6 +58,15 @@ public class PostReadService {
 				cursorRequest.size());
 		} else {
 			return postRepository.findAllByMemberIdAndOrderByIdDesc(memberId, cursorRequest.size());
+		}
+	}
+
+	private List<Post> findAllBy(List<Long> memberIds, CursorRequest cursorRequest) {
+		if (cursorRequest.hasKey()) {
+			return postRepository.findAllByLessThanIdAndInMemberIdsAndOrderByIdDesc(cursorRequest.key(), memberIds,
+				cursorRequest.size());
+		} else {
+			return postRepository.findAllByInMemberIdsAndOrderByIdDesc(memberIds, cursorRequest.size());
 		}
 	}
 }
