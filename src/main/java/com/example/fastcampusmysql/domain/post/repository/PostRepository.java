@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
@@ -17,7 +16,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
-import com.example.fastcampusmysql.domain.PageHelper;
+import com.example.fastcampusmysql.application.util.PageHelper;
 import com.example.fastcampusmysql.domain.post.dto.DailyPostCount;
 import com.example.fastcampusmysql.domain.post.dto.DailyPostCountRequest;
 import com.example.fastcampusmysql.domain.post.entity.Post;
@@ -54,7 +53,7 @@ public class PostRepository {
 		return namedParameterJdbcTemplate.query(sql, params, DAILY_POST_COUNT_ROW_MAPPER);
 	}
 
-	public Page<Post> findAllByMemberId(Long memberId, Pageable pageable) {
+	public Page<Post> findAllByMemberIdAndOrderByIdDesc(Long memberId, Pageable pageable) {
 		var params = new MapSqlParameterSource()
 			.addValue("memberId", memberId)
 			.addValue("size", pageable.getPageSize())
@@ -80,6 +79,35 @@ public class PostRepository {
 			""", TABLE);
 		var params = new MapSqlParameterSource().addValue("memberId", memberId);
 		return namedParameterJdbcTemplate.queryForObject(sql, params, Long.class);
+	}
+
+	public List<Post> findAllByMemberIdAndOrderByIdDesc(Long memberId, int size) {
+		String sql = String.format("""
+			SELECT *
+			FROM %s
+			WHERE memberId = :memberId
+			ORDER BY id desc
+			LIMIT :size
+			""", TABLE);
+		var params = new MapSqlParameterSource()
+			.addValue("memberId", memberId)
+			.addValue("size", size);
+		return namedParameterJdbcTemplate.query(sql, params, ROW_MAPPER);
+	}
+
+	public List<Post> findAllByLessThanIdAndMemberIdAndOrderByIdDesc(Long id, Long memberId, int size) {
+		String sql = String.format("""
+			SELECT *
+			FROM %s
+			WHERE memberId = :memberId and id < :id
+			ORDER BY id desc
+			LIMIT :size
+			""", TABLE);
+		var params = new MapSqlParameterSource()
+			.addValue("memberId", memberId)
+			.addValue("id", id)
+			.addValue("size", size);
+		return namedParameterJdbcTemplate.query(sql, params, ROW_MAPPER);
 	}
 
 	public Post save(Post post) {
