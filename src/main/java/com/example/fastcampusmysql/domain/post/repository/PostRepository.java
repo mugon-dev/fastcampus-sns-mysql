@@ -42,6 +42,20 @@ public class PostRepository {
 	);
 	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
+	public List<Post> findAllByIds(List<Long> ids) {
+		if (ids.isEmpty()) {
+			return List.of();
+		}
+		String sql = String.format("""
+			SELECT *
+			FROM %s
+			WHERE id in (:ids)
+			""", TABLE);
+		var params = new MapSqlParameterSource()
+			.addValue("ids", ids);
+		return namedParameterJdbcTemplate.query(sql, params, ROW_MAPPER);
+	}
+
 	public List<DailyPostCount> groupByCreatedDate(DailyPostCountRequest request) {
 		String sql = String.format("""
 			SELECT memberId, createdDate, count(id) as cnt

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fastcampusmysql.application.usecase.CreatePostUsecase;
 import com.example.fastcampusmysql.application.usecase.GetTImelinePostsUsecase;
 import com.example.fastcampusmysql.application.util.CursorRequest;
 import com.example.fastcampusmysql.application.util.PageCursor;
@@ -30,10 +31,11 @@ public class PostController {
 	final private PostWriteService postWriteService;
 	final private PostReadService postReadService;
 	final private GetTImelinePostsUsecase getTImelinePostsUsecase;
+	final private CreatePostUsecase createPostUsecase;
 
 	@PostMapping()
 	public Long create(PostCommand command) {
-		return postWriteService.create(command);
+		return createPostUsecase.execute(command);
 	}
 
 	@PostMapping("/daily-post-counts")
@@ -59,7 +61,7 @@ public class PostController {
 	@GetMapping("/members/{memberId}/timeline")
 	public PageCursor<Post> getTimeline(@PathVariable Long memberId,
 		CursorRequest cursorRequest) {
-		return getTImelinePostsUsecase.execute(memberId, cursorRequest);
+		return getTImelinePostsUsecase.executeByTimeline(memberId, cursorRequest);
 	}
 
 }
