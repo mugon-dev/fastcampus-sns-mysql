@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fastcampusmysql.application.usecase.CreatePostLikeUsecase;
 import com.example.fastcampusmysql.application.usecase.CreatePostUsecase;
 import com.example.fastcampusmysql.application.usecase.GetTImelinePostsUsecase;
 import com.example.fastcampusmysql.application.util.CursorRequest;
@@ -32,6 +34,7 @@ public class PostController {
 	final private PostReadService postReadService;
 	final private GetTImelinePostsUsecase getTImelinePostsUsecase;
 	final private CreatePostUsecase createPostUsecase;
+	final private CreatePostLikeUsecase createPostLikeUsecase;
 
 	@PostMapping()
 	public Long create(PostCommand command) {
@@ -72,5 +75,10 @@ public class PostController {
 	@PostMapping("/{postId}/like/optimistic")
 	public void likePostOptimistic(@PathVariable Long postId) {
 		postWriteService.likePostByOptimisticLock(postId);
+	}
+
+	@PostMapping("/{postId}/like/v2")
+	public void likePostV2(@PathVariable Long postId, @RequestParam Long memberId) {
+		createPostLikeUsecase.execute(postId, memberId);
 	}
 }

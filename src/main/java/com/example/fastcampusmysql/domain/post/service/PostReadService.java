@@ -10,7 +10,9 @@ import com.example.fastcampusmysql.application.util.CursorRequest;
 import com.example.fastcampusmysql.application.util.PageCursor;
 import com.example.fastcampusmysql.domain.post.dto.DailyPostCount;
 import com.example.fastcampusmysql.domain.post.dto.DailyPostCountRequest;
+import com.example.fastcampusmysql.domain.post.dto.PostDto;
 import com.example.fastcampusmysql.domain.post.entity.Post;
+import com.example.fastcampusmysql.domain.post.repository.PostLikeRepository;
 import com.example.fastcampusmysql.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 public class PostReadService {
 	final private PostRepository postRepository;
+	final private PostLikeRepository postLikeRepository;
 
 	private static long getNextKey(List<Post> posts) {
 		return posts.stream().mapToLong(Post::getId).min().orElse(CursorRequest.NONE_KEY);
@@ -54,6 +57,20 @@ public class PostReadService {
 
 	public List<Post> getPosts(List<Long> ids) {
 		return postRepository.findAllByIds(ids);
+	}
+
+	private PostDto toDto(Post post) {
+		return new PostDto(
+			post.getId(),
+			post.getMemberId(),
+			post.getContents(),
+			post.getCreatedAt(),
+			postLikeRepository.count(post.getId())
+		);
+	}
+
+	public Post getPost(Long postId) {
+		return postRepository.findById(postId, false).orElseThrow();
 	}
 
 	private List<Post> findAllBy(Long memberId, CursorRequest cursorRequest) {
